@@ -25,7 +25,7 @@ public class JwtService {
 	private SecretKey getSigningKey() {
 		return Keys.hmacShaKeyFor(secretKey.getBytes());
 	}
-	private String generateToken(String username, Role role) {
+	public String generateToken(String username, Role role) {
 		return Jwts.builder()
 				.subject(username)
 				.claim("role", role)
