@@ -1,5 +1,10 @@
 package com.malak.chatapp.domain;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,7 +32,11 @@ public class Message {
 	private User sender;
 	
 	@ManyToOne
-	@JoinColumn(name = "reciever_id")
-	private User reciever;
+	@JoinColumn(name = "receiver_id")
+	private User receiver;
 	private String content;
+	
+	@CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }

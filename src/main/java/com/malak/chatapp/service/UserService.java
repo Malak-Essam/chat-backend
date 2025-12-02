@@ -47,8 +47,17 @@ public class UserService {
 				.role(user.getRole())
 				.build();
 	}
+	public User findUserByUsername(String username) {
+		return userRepository.findByUsername(username).orElseThrow(
+				() -> new ResourceNotFoundException("no user with this username"));
+	}
+	public User findUserById(long id) {
+		return userRepository.findById(id).orElseThrow(
+				() -> new ResourceNotFoundException("no user with this id"));
+	}
+	
 
-	public List<UserDto> getUsers() {
+	public List<UserDto> findAllUsers() {
 		List<User> users = userRepository.findAll();
 		List<UserDto> usersDto = users.stream().map(user -> 
 			UserDto

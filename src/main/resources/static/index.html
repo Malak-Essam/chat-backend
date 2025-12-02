@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Chat Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Auth Screen */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .auth-box h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .toggle-auth a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Chat Screen */
+        .chat-container {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username {
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .chat-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Users List */
+        .users-list {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .users-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .users-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .user-item {
+            padding: 15px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .user-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .user-item.active .user-avatar {
+            background: white;
+            color: #667eea;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-status {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-area-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .selected-user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .selected-user-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .connection-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .connection-status.connected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .no-chat-selected {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.own {
+            align-items: flex-end;
+        }
+
+        .message-content {
+            max-width: 60%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.own .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message:not(.own) .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #sendBtn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        #sendBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar */
+        .messages-container::-webkit-scrollbar,
+        .users-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track,
+        .users-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb,
+        .users-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover,
+        .users-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Container -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-box">
+                <h2 id="authTitle">Login</h2>
+                
+                <div id="errorMessage" class="error-message hidden"></div>
+                <div id="successMessage" class="success-message hidden"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                    <div class="toggle-auth">
+                        Don't have an account? <a href="#" id="showRegister">Register</a>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="registerUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <button type="submit" class="btn">Register</button>
+                    <div class="toggle-auth">
+                        Already have an account? <a href="#" id="showLogin">Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header">
+                <h2>Private Chat</h2>
+                <div class="user-info">
+                    <span class="username" id="currentUsername"></span>
+                    <div class="connection-status disconnected" id="connectionStatus">Disconnected</div>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+            
+            <div class="chat-body">
+                <!-- Users List -->
+                <div class="users-list">
+                    <div class="users-header">Users</div>
+                    <div class="users-container" id="usersContainer">
+                        <!-- Users will be added here -->
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="chat-area">
+                    <div class="chat-area-header" id="chatAreaHeader" style="display: none;">
+                        <div class="selected-user-info">
+                            <div class="selected-user-avatar" id="selectedUserAvatar"></div>
+                            <div class="selected-user-name" id="selectedUserName"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="messages-container" id="messagesContainer">
+                        <div class="no-chat-selected" id="noChatSelected">
+                            Select a user to start chatting
+                        </div>
+                    </div>
+                    
+                    <div class="input-container" id="inputContainer" style="display: none;">
+                        <input type="text" id="messageInput" placeholder="Type a message...">
+                        <button id="sendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+        
+        let stompClient = null;
+        let currentUser = null;
+        let currentUserId = null;
+        let jwtToken = null;
+        let selectedUser = null;
+        let selectedUserId = null;
+        let messageHistory = {};
+        let userIdMap = {};
+
+        // DOM Elements
+        const authContainer = document.getElementById('authContainer');
+        const chatContainer = document.getElementById('chatContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const usersContainer = document.getElementById('usersContainer');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const currentUsername = document.getElementById('currentUsername');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const noChatSelected = document.getElementById('noChatSelected');
+        const chatAreaHeader = document.getElementById('chatAreaHeader');
+        const inputContainer = document.getElementById('inputContainer');
+        const selectedUserName = document.getElementById('selectedUserName');
+        const selectedUserAvatar = document.getElementById('selectedUserAvatar');
+
+        // Toggle between login and register
+        document.getElementById('showRegister').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Register';
+            clearMessages();
+        });
+
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Login';
+            clearMessages();
+        });
+
+        // Register
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Registration successful! Please login.');
+                    setTimeout(() => {
+                        document.getElementById('showLogin').click();
+                    }, 1500);
+                } else {
+                    showError(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        // Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                console.log('Attempting login to:', `${API_BASE_URL}/api/auth/login`);
+                
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                console.log('Login response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Login response data:', data);
+
+                if (response.ok && data.success && data.data) {
+                    jwtToken = data.data;
+                    currentUser = username;
+                    localStorage.setItem('jwt_token', jwtToken);
+                    localStorage.setItem('username', username);
+                    
+                    // Get current user ID first, then show chat
+                    await getCurrentUserId();
+                    showChatInterface();
+                    connectWebSocket();
+                    loadUsers();
+                } else {
+                    showError(data.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error details:', error);
+                showError('Network error: ' + error.message + '. Check console for details.');
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (stompClient) {
+                stompClient.disconnect();
+            }
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('username');
+            jwtToken = null;
+            currentUser = null;
+            currentUserId = null;
+            selectedUser = null;
+            selectedUserId = null;
+            messageHistory = {};
+            userIdMap = {};
+            authContainer.style.display = 'flex';
+            chatContainer.style.display = 'none';
+            usersContainer.innerHTML = '';
+            messagesContainer.innerHTML = '';
+        });
+
+        // Get current user ID
+        async function getCurrentUserId() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + jwtToken
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const users = data.data || [];
+                    const currentUserData = users.find(u => u.username === currentUser);
+                    if (currentUserData) {
+                        currentUserId = currentUserData.id;
+                    }
+                }
+            } catch (error) {
+                console.error('Error getting current user ID:', error);
+            }
+        }
+
+        // Send message
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (content && stompClient && stompClient.connected && selectedUser) {
+                const message = {
+                    sender: currentUser,
+                    recipient: selectedUser,
+                    content: content,
+                    timestamp: new Date().toISOString()
+                };
+                
+                stompClient.send("/app/private", {}, JSON.stringify(message));
+                
+                // Don't display here - wait for server response to avoid duplicates
+                messageInput.value = '';
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + jwtToken
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Users data received:', data);
+                    
+                    let users = [];
+                    if (data.data && Array.isArray(data.data)) {
+                        users = data.data;
+                    } else if (Array.isArray(data)) {
+                        users = data;
+                    }
+                    
+                    // Build userIdMap
+                    users.forEach(user => {
+                        const username = user.username || user.name || user.email;
+                        if (username && user.id) {
+                            userIdMap[username] = user.id;
+                            if (username === currentUser) {
+                                currentUserId = user.id;
+                            }
+                        }
+                    });
+                    
+                    console.log('UserIdMap:', userIdMap);
+                    console.log('Current user ID:', currentUserId);
+                    
+                    const otherUsers = users.filter(u => {
+                        const username = u.username || u.name || u.email;
+                        return username && username !== currentUser;
+                    });
+                    
+                    displayUsers(otherUsers);
+                } else {
+                    console.error('Failed to load users:', response.status);
+                    showError('Failed to load users. Status: ' + response.status);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Error loading users: ' + error.message);
+            }
+        }
+
+        function displayUsers(users) {
+            usersContainer.innerHTML = '';
+            
+            if (!users || users.length === 0) {
+                const noUsersDiv = document.createElement('div');
+                noUsersDiv.style.padding = '20px';
+                noUsersDiv.style.textAlign = 'center';
+                noUsersDiv.style.color = '#999';
+                noUsersDiv.textContent = 'No other users available';
+                usersContainer.appendChild(noUsersDiv);
+                return;
+            }
+            
+            users.forEach(user => {
+                // Get username from different possible field names
+                const username = user.username || user.name || user.email || 'Unknown';
+                
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                userDiv.onclick = () => selectUser(username);
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'user-avatar';
+                avatar.textContent = username.charAt(0).toUpperCase();
+                
+                const details = document.createElement('div');
+                details.className = 'user-details';
+                
+                const name = document.createElement('div');
+                name.className = 'user-name';
+                name.textContent = username;
+                
+                const status = document.createElement('div');
+                status.className = 'user-status';
+                status.textContent = 'Click to chat';
+                
+                details.appendChild(name);
+                details.appendChild(status);
+                userDiv.appendChild(avatar);
+                userDiv.appendChild(details);
+                usersContainer.appendChild(userDiv);
+            });
+        }
+
+        function selectUser(username) {
+            selectedUser = username;
+            selectedUserId = userIdMap[username];
+            
+            if (!selectedUserId) {
+                console.error('User ID not found for:', username);
+                return;
+            }
+            
+            // Update active user
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.querySelector('.user-name').textContent === username) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update chat header
+            selectedUserName.textContent = username;
+            selectedUserAvatar.textContent = username.charAt(0).toUpperCase();
+            chatAreaHeader.style.display = 'flex';
+            inputContainer.style.display = 'flex';
+            noChatSelected.style.display = 'none';
+            
+            // Load message history from server
+            loadMessageHistory();
+        }
+
+        async function loadMessageHistory() {
+            if (!currentUserId || !selectedUserId) {
+                console.error('Missing user IDs:', { currentUserId, selectedUserId });
+                messagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Unable to load messages - missing user information</div>';
+                return;
+            }
+
+            try {
+                console.log('Loading message history:', { currentUserId, selectedUserId });
+                const response = await fetch(`${API_BASE_URL}/messages/${currentUserId}/${selectedUserId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + jwtToken
+                    }
+                });
+
+                console.log('Message history response status:', response.status);
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    console.log('Message history loaded:', messages);
+                    
+                    // Clear current display
+                    messagesContainer.innerHTML = '';
+                    
+                    // Check if messages is empty
+                    if (!messages || messages.length === 0) {
+                        messagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No messages yet. Start the conversation!</div>';
+                        return;
+                    }
+                    
+                    // Store in local history
+                    messageHistory[selectedUser] = messages;
+                    
+                    // Display all messages
+                    messages.forEach(msg => {
+                        // Convert Message entity to display format
+                        const displayMsg = {
+                            sender: msg.sender.username,
+                            recipient: msg.receiver.username,
+                            content: msg.content,
+                            timestamp: msg.createdAt
+                        };
+                        displayMessage(displayMsg);
+                    });
+                } else {
+                    console.error('Failed to load messages:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    messagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No previous messages</div>';
+                }
+            } catch (error) {
+                console.error('Error loading message history:', error);
+                messagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No previous messages</div>';
+            }
+        }
+
+        function connectWebSocket() {
+            const socket = new SockJS(`${API_BASE_URL}/chat`);
+            stompClient = Stomp.over(socket);
+
+            const headers = {
+                'Authorization': 'Bearer ' + jwtToken
+            };
+
+            stompClient.connect(headers, onConnected, onError);
+        }
+
+        function onConnected() {
+            console.log('WebSocket connected');
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.className = 'connection-status connected';
+
+            // Subscribe to private messages queue
+            stompClient.subscribe('/user/queue/private', onMessageReceived);
+        }
+
+        function onError(error) {
+            console.error('WebSocket error:', error);
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.className = 'connection-status disconnected';
+            showError('Failed to connect to chat. Please check your connection.');
+        }
+
+        function onMessageReceived(payload) {
+            console.log('Message received:', payload);
+            const message = JSON.parse(payload.body);
+            console.log('Parsed message:', message);
+            
+            // Add to message history
+            const otherUser = message.sender === currentUser ? message.recipient : message.sender;
+            if (!messageHistory[otherUser]) {
+                messageHistory[otherUser] = [];
+            }
+            messageHistory[otherUser].push(message);
+            
+            // Display if it's the current conversation
+            if (selectedUser === message.sender || selectedUser === message.recipient) {
+                displayMessage(message);
+            }
+        }
+
+        function displayMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message' + (message.sender === currentUser ? ' own' : '');
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message.content;
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            const date = new Date(message.timestamp);
+            timeDiv.textContent = date.toLocaleTimeString();
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showChatInterface() {
+            authContainer.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            currentUsername.textContent = currentUser;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function clearMessages() {
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+        }
+
+        // Check if user is already logged in
+        window.addEventListener('load', async () => {
+            const storedToken = localStorage.getItem('jwt_token');
+            const storedUsername = localStorage.getItem('username');
+            
+            if (storedToken && storedUsername) {
+                jwtToken = storedToken;
+                currentUser = storedUsername;
+                await getCurrentUserId();
+                showChatInterface();
+                connectWebSocket();
+                loadUsers();
+            }
+        });
+    </script>
+</body>
+</html>

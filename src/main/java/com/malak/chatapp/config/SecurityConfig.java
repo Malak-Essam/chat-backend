@@ -35,7 +35,10 @@ public class SecurityConfig {
 		.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 		.csrf(csrf -> csrf.disable())
 		.authorizeHttpRequests(auth -> auth
-				.anyRequest().permitAll()
+				.requestMatchers("/swagger-ui/**", "/v3/api-docs*/**").permitAll()
+				.requestMatchers("/chat/**","/index.html").permitAll()   // allow WebSocket handshake
+		        .requestMatchers("/api/auth/**").permitAll()
+		        .anyRequest().authenticated()
 				)
 		.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 		.logout(logout -> logout.disable())
@@ -52,7 +55,7 @@ public class SecurityConfig {
 	@Bean
     public CorsConfigurationSource corsConfigurationSource() {
     	CorsConfiguration config = new CorsConfiguration();
-    	config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
+    	config.setAllowedOriginPatterns(List.of("*"));
     	config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

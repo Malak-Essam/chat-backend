@@ -32,7 +32,21 @@ public class JwtAuthFilter extends OncePerRequestFilter  {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
+		// 1. Skip WebSocket handshake paths
+	    if (request.getServletPath().startsWith("/chat")) {
+	        filterChain.doFilter(request, response);
+	        return;
+	    }
+
+	    // 2. Skip preflight OPTIONS requests
+	    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+	        filterChain.doFilter(request, response);
+	        return;
+	    }
+		
+		
 		try {
+			
 		final String authHeader = request.getHeader("Authorization");
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
