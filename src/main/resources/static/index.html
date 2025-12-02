@@ -471,10 +471,6 @@
                         <input type="text" id="registerUsername" required>
                     </div>
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="registerEmail" required>
-                    </div>
-                    <div class="form-group">
                         <label>Password</label>
                         <input type="password" id="registerPassword" required>
                     </div>
@@ -582,14 +578,13 @@
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('registerUsername').value;
-            const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    body: JSON.stringify({ username, password })
                 });
 
                 const data = await response.json();
@@ -735,7 +730,7 @@
                     
                     // Build userIdMap
                     users.forEach(user => {
-                        const username = user.username || user.name || user.email;
+                        const username = user.username || user.name;
                         if (username && user.id) {
                             userIdMap[username] = user.id;
                             if (username === currentUser) {
@@ -748,7 +743,7 @@
                     console.log('Current user ID:', currentUserId);
                     
                     const otherUsers = users.filter(u => {
-                        const username = u.username || u.name || u.email;
+                        const username = u.username || u.name;
                         return username && username !== currentUser;
                     });
                     
@@ -778,7 +773,7 @@
             
             users.forEach(user => {
                 // Get username from different possible field names
-                const username = user.username || user.name || user.email || 'Unknown';
+                const username = user.username || user.name || 'Unknown';
                 
                 const userDiv = document.createElement('div');
                 userDiv.className = 'user-item';
