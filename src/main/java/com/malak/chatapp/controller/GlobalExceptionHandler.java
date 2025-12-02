@@ -40,5 +40,11 @@ public class GlobalExceptionHandler {
     	ApiResponse<Object> response = ApiResponse.error("authentiacation faild");
     	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+    	ApiResponse<Object> response = ApiResponse.error(ex.getMessage());
+    	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    
     
 }
