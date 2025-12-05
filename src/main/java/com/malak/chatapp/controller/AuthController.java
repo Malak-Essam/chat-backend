@@ -10,13 +10,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.malak.chatapp.domain.RefreshToken;
 import com.malak.chatapp.domain.Role;
 import com.malak.chatapp.domain.User;
 import com.malak.chatapp.dto.ApiResponse;
 import com.malak.chatapp.dto.CreateUserDto;
 import com.malak.chatapp.dto.LoginRequest;
+import com.malak.chatapp.dto.RefreshTokenRequest;
+import com.malak.chatapp.dto.TokenDto;
+import com.malak.chatapp.exception.ResourceNotFoundException;
 import com.malak.chatapp.secuirty.CustomUserDetails;
 import com.malak.chatapp.secuirty.JwtService;
+import com.malak.chatapp.service.RefreshTokenService;
 import com.malak.chatapp.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,9 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class AuthController {
+
+    private final RefreshTokenService refreshTokenService;
 
     private final UserService userService;
     private final JwtService jwtService;
@@ -34,29 +41,63 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<String>> register( @RequestBody CreateUserDto createUserDto) {
+    public ResponseEntity<ApiResponse<TokenDto>> register( @RequestBody CreateUserDto createUserDto) {
 	    User createdUser = userService.createUser(createUserDto, Role.USER);
 	    
 	    // Generate JWT for the new user
-	    String token = jwtService.generateToken(createdUser.getUsername(), createdUser.getRole());
-	    ApiResponse<String> response = ApiResponse.success(token, "user registered successfully");
+	    String access = jwtService.generateAccessToken(createdUser.getUsername(), createdUser.getRole());
+	    RefreshToken refreshToken = refreshTokenService.createRefreshToken(createdUser.getUsername(), createdUser.getRole());
+        String refresh = refreshToken.getToken();
+        TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).build();
+        ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "Registered successfully");
 	    
 	   
 	    return ResponseEntity.status(HttpStatus.CREATED).body(response);
 }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@RequestBody LoginRequest request) throws Exception{
-//        try {
+    public ResponseEntity<ApiResponse<TokenDto>> login(@RequestBody LoginRequest request) throws Exception{
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            String jwtToken = jwtService.generateToken(authentication.getName(), userDetails.getUser().getRole());
-            ApiResponse<String> response = ApiResponse.success(jwtToken, "login successfully");
+            String access = jwtService.generateAccessToken(authentication.getName(), userDetails.getUser().getRole());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), userDetails.getUser().getRole());
+            String refresh = refreshToken.getToken();
+            
+            TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).build();
+            ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "login successfully");
 
             return ResponseEntity.ok(response);     
     }
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<TokenDto>> refreshToken(@RequestBody RefreshTokenRequest request){
+    	String requestRefreshToken = request.getRefreshToken();
+    	RefreshToken refreshToken = refreshTokenService.findByToken(requestRefreshToken)
+    			.orElseThrow(() -> new ResourceNotFoundException("refresh token not found"));
+    	
+    	if(refreshToken.isRevoked()) {
+    		throw new IllegalArgumentException("Refresh token is revoked"); 
+    	}
+    	if(!refreshTokenService.verifyExpiration(refreshToken)) {
+    		throw new IllegalArgumentException("Refresh token is expired");
+    	}
+    	
+    	String username = jwtService.extractUsername(requestRefreshToken);
+    	if(! jwtService.isTokenValid(requestRefreshToken, username) || !jwtService.isRefreshToken(requestRefreshToken)) {
+    		throw new IllegalArgumentException("Invalid refresh token");
+    	}
+    	User user = userService.findUserByUsername(username);
+    	String newAccessToken = jwtService.generateAccessToken(username, user.getRole());
+    	TokenDto tokenDto = TokenDto.builder().access(newAccessToken).refresh(requestRefreshToken).build();
+        ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "refresh the access token successfully");
+		
+        return ResponseEntity.ok(response);
+    	
+    	
+    }
+    
 
 }
