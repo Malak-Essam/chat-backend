@@ -38,7 +38,7 @@ public class UserService {
 		return userRepository.save(user);
 	}
 
-	public UserDto getUserById(long userId) {
+	public UserDto getUserById(Long userId) {
 		User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("no user with this id"));
 		return UserDto
 				.builder()
