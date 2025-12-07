@@ -24,6 +24,7 @@ public class ChatController {
     
     @MessageMapping("/private")
     public void sendPrivateMessage(@Payload MessageDTO dto, Principal principal) {
+    	try {
         // Get sender from JWT authentication (more secure)
         String senderUsername = principal.getName();
         
@@ -56,5 +57,8 @@ public class ChatController {
             "/queue/private",
             outgoing
         );
+    	} catch (Exception e) {
+			throw e;
+		}
     }
 }

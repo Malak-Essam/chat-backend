@@ -1,5 +1,7 @@
 package com.malak.chatapp.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,6 +14,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class FriendRequestDto {
-	private Long sender_id;
-	private Long receiver_id;
+	private Long id;
+	private UserDto sender;
+    private UserDto receiver;
+    private String status;
+    private LocalDateTime createdAt;
 }

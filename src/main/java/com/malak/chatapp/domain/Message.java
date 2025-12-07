@@ -25,8 +25,9 @@ import lombok.Setter;
 @Setter
 public class Message {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private long id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
 	@ManyToOne
 	@JoinColumn(name = "sender_id")
 	private User sender;

@@ -43,7 +43,7 @@ public class UserService {
 		return UserDto
 				.builder()
 				.id(user.getId())
-				.name(user.getUsername())
+				.username(user.getUsername())
 				.role(user.getRole())
 				.build();
 	}
@@ -63,7 +63,7 @@ public class UserService {
 			UserDto
 			.builder()
 			.id(user.getId())
-			.name(user.getUsername())
+			.username(user.getUsername())
 			.role(user.getRole())
 			.build()).toList();
 		return usersDto;
