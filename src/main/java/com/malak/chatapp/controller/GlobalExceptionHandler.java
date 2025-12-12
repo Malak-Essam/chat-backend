@@ -1,5 +1,8 @@
 package com.malak.chatapp.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -9,10 +12,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.malak.chatapp.dto.ApiResponse;
-import com.malak.chatapp.exception.*;
+import com.malak.chatapp.exception.FriendRequestNotFoundException;
+import com.malak.chatapp.exception.InvalidFriendRequestException;
+import com.malak.chatapp.exception.ResourceAlreadyExistsException;
+import com.malak.chatapp.exception.ResourceNotFoundException;
+import com.malak.chatapp.exception.UnauthorizedActionException;
 
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -69,6 +75,29 @@ public class GlobalExceptionHandler {
         });
         ApiResponse<Object> response = ApiResponse.error("Validation failed", errors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleConstraintViolation(
+            ConstraintViolationException ex) {
+        
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String fieldName = violation.getPropertyPath().toString();
+            String message = violation.getMessage();
+            errors.put(fieldName, message);
+        });
+
+        ApiResponse<Map<String, String>> response = ApiResponse.error(
+            "Validation failed", 
+            errors
+        );
+        
+        return ResponseEntity.badRequest().body(response);
+    }
+    @ExceptionHandler(FriendRequestNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalState(FriendRequestNotFoundException ex) {
+        ApiResponse<Object> response = ApiResponse.error(ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
     }
     
     @ExceptionHandler(Exception.class)

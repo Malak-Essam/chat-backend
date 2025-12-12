@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,11 +26,14 @@ import com.malak.chatapp.mapper.FriendMapper;
 import com.malak.chatapp.service.FriendService;
 import com.malak.chatapp.service.UserService;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/friends")
 @RequiredArgsConstructor
+@Validated
 public class FriendController {
     
     private final FriendService friendService;
@@ -46,7 +50,9 @@ public class FriendController {
      */
     @PostMapping("/request/{receiverId}")
     public ResponseEntity<ApiResponse<FriendRequestDto>> sendFriendRequest(
-            @PathVariable Long receiverId,
+            @PathVariable
+            @NotNull(message = "ReceiverId must be not null")
+            Long receiverId,
             Principal principal) {
         
         User sender = userService.findUserByUsername(principal.getName());
@@ -65,7 +71,9 @@ public class FriendController {
      */
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<ApiResponse<Void>> acceptFriendRequest(
-            @PathVariable Long requestId,
+            @PathVariable
+            @NotNull(message = "RequestId must be not null")
+            Long requestId,
             Principal principal) {
         
         User user = userService.findUserByUsername(principal.getName());
@@ -80,7 +88,9 @@ public class FriendController {
      */
     @PostMapping("/request/{requestId}/reject")
     public ResponseEntity<ApiResponse<Void>> rejectFriendRequest(
-            @PathVariable Long requestId,
+            @PathVariable 
+            @NotNull(message = "RequestId must be not null")
+            Long requestId,
             Principal principal) {
         
         User user = userService.findUserByUsername(principal.getName());
@@ -95,7 +105,9 @@ public class FriendController {
      */
     @DeleteMapping("/request/{requestId}")
     public ResponseEntity<ApiResponse<Void>> cancelFriendRequest(
-            @PathVariable Long requestId,
+            @PathVariable 
+            @NotNull(message = "RequestId must be not null")
+            Long requestId,
             Principal principal) {
         
         User user = userService.findUserByUsername(principal.getName());
@@ -195,7 +207,9 @@ public class FriendController {
      */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<UserDto>>> searchFriends(
-            @RequestParam String query,
+            @RequestParam
+            @NotBlank(message = "Query must be not null or blank")
+            String query,
             Principal principal) {
         
         User user = userService.findUserByUsername(principal.getName());
@@ -215,7 +229,9 @@ public class FriendController {
      */
     @GetMapping("/check/{userId}")
     public ResponseEntity<ApiResponse<Boolean>> checkFriendship(
-            @PathVariable Long userId,
+            @PathVariable 
+            @NotNull(message = "UserId must be not null")
+            Long userId,
             Principal principal) {
         
         User currentUser = userService.findUserByUsername(principal.getName());
@@ -231,7 +247,9 @@ public class FriendController {
      */
     @GetMapping("/status/{userId}")
     public ResponseEntity<ApiResponse<FriendshipStatusDto>> getFriendshipStatus(
-            @PathVariable Long userId,
+            @PathVariable 
+            @NotNull(message = "UserId must be not null")
+            Long userId,
             Principal principal) {
         
         User currentUser = userService.findUserByUsername(principal.getName());
@@ -250,7 +268,9 @@ public class FriendController {
      */
     @GetMapping("/mutual/{userId}")
     public ResponseEntity<ApiResponse<List<UserDto>>> getMutualFriends(
-            @PathVariable Long userId,
+            @PathVariable 
+            @NotNull(message = "UserId must be not null")
+            Long userId,
             Principal principal) {
         
         User currentUser = userService.findUserByUsername(principal.getName());
@@ -270,7 +290,9 @@ public class FriendController {
      */
     @DeleteMapping("/{friendId}")
     public ResponseEntity<ApiResponse<Void>> removeFriend(
-            @PathVariable Long friendId,
+            @PathVariable 
+            @NotNull(message = "UserId must be not null")
+            Long friendId,
             Principal principal) {
         
         User user = userService.findUserByUsername(principal.getName());
