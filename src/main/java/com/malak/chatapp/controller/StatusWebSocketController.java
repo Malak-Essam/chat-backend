@@ -10,6 +10,7 @@ import com.malak.chatapp.dto.TypingIndicatorDTO;
 import com.malak.chatapp.service.TypingIndicatorService;
 import com.malak.chatapp.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -24,7 +25,7 @@ public class StatusWebSocketController {
      * Client sends: { recipientId: 5, typing: true/false }
      */
     @MessageMapping("/typing")
-    public void handleTypingIndicator(@Payload TypingIndicatorDTO dto, Principal principal) {
+    public void handleTypingIndicator(@Valid @Payload TypingIndicatorDTO dto, Principal principal) {
         String username = principal.getName();
         Long userId = userService.findUserByUsername(username).getId();
         
