@@ -12,6 +12,7 @@ import com.malak.chatapp.dto.ApiResponse;
 import com.malak.chatapp.dto.UserStatusDTO;
 import com.malak.chatapp.service.UserStatusService;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 
@@ -27,7 +28,10 @@ class StatusRestController {
      * GET /api/status/{userId}
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<UserStatusDTO>> getUserStatus(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<UserStatusDTO>> getUserStatus(
+    		@PathVariable
+    		@NotNull(message = "UserId must be not null")
+    		Long userId) {
     	ApiResponse<UserStatusDTO> response = ApiResponse.success(userStatusService.getUserStatus(userId));
     	return ResponseEntity.ok(response);
     }
