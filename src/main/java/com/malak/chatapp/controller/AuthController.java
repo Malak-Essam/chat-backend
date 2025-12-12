@@ -16,14 +16,17 @@ import com.malak.chatapp.domain.User;
 import com.malak.chatapp.dto.ApiResponse;
 import com.malak.chatapp.dto.CreateUserDto;
 import com.malak.chatapp.dto.LoginRequest;
+import com.malak.chatapp.dto.LoginResponseDto;
 import com.malak.chatapp.dto.RefreshTokenRequest;
 import com.malak.chatapp.dto.TokenDto;
+import com.malak.chatapp.dto.UserDto;
 import com.malak.chatapp.exception.ResourceNotFoundException;
 import com.malak.chatapp.secuirty.CustomUserDetails;
 import com.malak.chatapp.secuirty.JwtService;
 import com.malak.chatapp.service.RefreshTokenService;
 import com.malak.chatapp.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,14 +44,14 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<TokenDto>> register( @RequestBody CreateUserDto createUserDto) {
+    public ResponseEntity<ApiResponse<TokenDto>> register(@Valid @RequestBody CreateUserDto createUserDto) {
 	    User createdUser = userService.createUser(createUserDto, Role.USER);
 	    
 	    // Generate JWT for the new user
 	    String access = jwtService.generateAccessToken(createdUser.getUsername(), createdUser.getRole());
 	    RefreshToken refreshToken = refreshTokenService.createRefreshToken(createdUser.getUsername(), createdUser.getRole());
         String refresh = refreshToken.getToken();
-        TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).build();
+        TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).expiresIn(jwtService.getAccessTokenExpiration()).build();
         ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "Registered successfully");
 	    
 	   
@@ -56,24 +59,27 @@ public class AuthController {
 }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<TokenDto>> login(@RequestBody LoginRequest request) throws Exception{
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequest request) throws Exception{
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userDetails.getUser();
+            UserDto userDto = UserDto.builder().id(user.getId()).username(user.getUsername()).role(user.getRole()).build();
 
             String access = jwtService.generateAccessToken(authentication.getName(), userDetails.getUser().getRole());
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), userDetails.getUser().getRole());
             String refresh = refreshToken.getToken();
             
-            TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).build();
-            ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "login successfully");
+            TokenDto tokenDto = TokenDto.builder().access(access).refresh(refresh).expiresIn(jwtService.getAccessTokenExpiration()).build();
+            LoginResponseDto loginResponseDto = LoginResponseDto.builder().tokenDto(tokenDto).userDto(userDto).build();
+            ApiResponse<LoginResponseDto> response = ApiResponse.success(loginResponseDto, "login successfully");
 
             return ResponseEntity.ok(response);     
     }
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<TokenDto>> refreshToken(@RequestBody RefreshTokenRequest request){
+    public ResponseEntity<ApiResponse<TokenDto>> refreshToken(@Valid @RequestBody RefreshTokenRequest request){
     	String requestRefreshToken = request.getRefreshToken();
     	RefreshToken refreshToken = refreshTokenService.findByToken(requestRefreshToken)
     			.orElseThrow(() -> new ResourceNotFoundException("refresh token not found"));
@@ -91,7 +97,7 @@ public class AuthController {
     	}
     	User user = userService.findUserByUsername(username);
     	String newAccessToken = jwtService.generateAccessToken(username, user.getRole());
-    	TokenDto tokenDto = TokenDto.builder().access(newAccessToken).refresh(requestRefreshToken).build();
+    	TokenDto tokenDto = TokenDto.builder().access(newAccessToken).refresh(requestRefreshToken).expiresIn(jwtService.getAccessTokenExpiration()).build();
         ApiResponse<TokenDto> response = ApiResponse.success(tokenDto, "refresh the access token successfully");
 		
         return ResponseEntity.ok(response);

@@ -13,8 +13,10 @@ import com.malak.chatapp.domain.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 
 @Service
+@Getter
 public class JwtService {
 	@Value("${jwt.secret}")
 	private String secretKey;

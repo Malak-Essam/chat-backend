@@ -1,5 +1,6 @@
 package com.malak.chatapp.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,5 +13,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class RefreshTokenRequest {
+	@NotBlank(message = "Refresh token must be not blank or null")
 	String refreshToken;
 }
