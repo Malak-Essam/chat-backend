@@ -16,6 +16,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.malak.chatapp.secuirty.JwtAuthFilter;
+import com.malak.chatapp.secuirty.JwtAuthenticationEntryPoint;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	private final JwtAuthFilter jwtAuthFilter;
-
+	private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+	
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
@@ -42,7 +44,9 @@ public class SecurityConfig {
 				)
 		.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 		.logout(logout -> logout.disable())
-        .formLogin(form -> form.disable());
+        .formLogin(form -> form.disable())
+        .exceptionHandling(exception -> exception
+        		.authenticationEntryPoint(jwtAuthenticationEntryPoint));
 		
 		return http.build();
 	}
