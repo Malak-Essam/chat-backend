@@ -13,6 +13,7 @@ import com.malak.chatapp.dto.MessageDTO;
 import com.malak.chatapp.service.MessageService;
 import com.malak.chatapp.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -23,7 +24,7 @@ public class ChatController {
     private final UserService userService;
     
     @MessageMapping("/private")
-    public void sendPrivateMessage(@Payload MessageDTO dto, Principal principal) {
+    public void sendPrivateMessage(@Valid @Payload MessageDTO dto, Principal principal) {
     	try {
         // Get sender from JWT authentication (more secure)
         String senderUsername = principal.getName();
