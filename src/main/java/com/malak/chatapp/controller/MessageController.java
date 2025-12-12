@@ -12,6 +12,8 @@ import com.malak.chatapp.domain.User;
 import com.malak.chatapp.service.MessageService;
 import com.malak.chatapp.service.UserService;
 
+import jakarta.validation.constraints.NotNull;
+
 @RestController
 @RequestMapping("/messages")
 public class MessageController {
@@ -24,8 +26,13 @@ public class MessageController {
     }
 
     @GetMapping("/{user1}/{user2}")
-    public List<Message> getConversation(@PathVariable Long user1,
-                                         @PathVariable Long user2) {
+    public List<Message> getConversation(
+    		@PathVariable 
+    		@NotNull(message = "User 1 id must be not null")
+    		Long user1,
+    		@PathVariable 
+    		@NotNull(message = "User 2 id must be not null")                            
+    		Long user2) {
         User u1 = userService.findUserById(user1);
         User u2 = userService.findUserById(user2);
         return messageService.getConversation(u1, u2);
