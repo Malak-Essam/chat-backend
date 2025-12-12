@@ -13,6 +13,7 @@ import com.malak.chatapp.domain.FriendRequestStatus;
 import com.malak.chatapp.domain.Friendship;
 import com.malak.chatapp.domain.FriendshipStatus;
 import com.malak.chatapp.domain.User;
+import com.malak.chatapp.exception.ResourceNotFoundException;
 import com.malak.chatapp.repository.FriendRequestRepository;
 import com.malak.chatapp.repository.FriendshipRepository;
 import com.malak.chatapp.repository.UserRepository;
@@ -40,9 +41,9 @@ public class FriendService {
         }
         
         User sender = userRepository.findById(senderId)
-            .orElseThrow(() -> new RuntimeException("Sender not found with id: " + senderId));
+            .orElseThrow(() -> new ResourceNotFoundException("Sender not found with id: " + senderId));
         User receiver = userRepository.findById(receiverId)
-            .orElseThrow(() -> new RuntimeException("Receiver not found with id: " + receiverId));
+            .orElseThrow(() -> new ResourceNotFoundException("Receiver not found with id: " + receiverId));
         
         if (friendshipRepository.areFriends(senderId, receiverId)) {
             throw new IllegalStateException("Users are already friends");
@@ -75,7 +76,7 @@ public class FriendService {
     @Transactional
     public void acceptFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
-            .orElseThrow(() -> new RuntimeException("Friend request not found with id: " + requestId));
+            .orElseThrow(() -> new ResourceNotFoundException("Friend request not found with id: " + requestId));
         
         if (!request.getReceiver().getId().equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to accept this request");
@@ -103,7 +104,7 @@ public class FriendService {
     @Transactional
     public void rejectFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
-            .orElseThrow(() -> new RuntimeException("Friend request not found with id: " + requestId));
+            .orElseThrow(() -> new ResourceNotFoundException("Friend request not found with id: " + requestId));
         
         if (!request.getReceiver().getId().equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to reject this request");
@@ -122,7 +123,7 @@ public class FriendService {
     @Transactional
     public void cancelFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
-            .orElseThrow(() -> new RuntimeException("Friend request not found with id: " + requestId));
+            .orElseThrow(() -> new ResourceNotFoundException("Friend request not found with id: " + requestId));
         
         if (!request.getSender().getId().equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to cancel this request");
@@ -158,7 +159,7 @@ public class FriendService {
     @Transactional(readOnly = true)
     public List<User> getFriends(Long userId) {
         userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return friendshipRepository.getFriendsForUserId(userId);
     }
     
@@ -175,9 +176,9 @@ public class FriendService {
     @Transactional
     public void removeFriend(Long userId, Long friendId) {
         userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         userRepository.findById(friendId)
-            .orElseThrow(() -> new RuntimeException("Friend not found with id: " + friendId));
+            .orElseThrow(() -> new ResourceNotFoundException("Friend not found with id: " + friendId));
         
         if (!friendshipRepository.areFriends(userId, friendId)) {
             throw new IllegalStateException("Users are not friends");
