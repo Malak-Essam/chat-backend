@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -19,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.malak.chatapp.domain.FriendRequest;
 import com.malak.chatapp.domain.FriendRequestStatus;
+import com.malak.chatapp.domain.Friendship;
 import com.malak.chatapp.domain.User;
 import com.malak.chatapp.exception.ResourceNotFoundException;
 import com.malak.chatapp.repository.FriendRequestRepository;
@@ -138,5 +142,99 @@ public class FriendRequestServiceTest {
 		assertEquals(receiver, result.getReceiver());
 		assertEquals(FriendRequestStatus.PENDING, result.getStatus());
 	}
+	
+	
+//	test accepts
+	@Test
+	void acceptFriendRequest_senderCannotAccept_throwsException() {
+		FriendRequest request = FriendRequest
+				.builder()
+				.id(1L)
+				.sender(sender)
+				.receiver(receiver)
+				.status(FriendRequestStatus.PENDING)
+				.build();
+		
+		when(friendRequestRepository.findById(1L)).thenReturn(Optional.of(request));
+		
+		assertThrows(IllegalArgumentException.class, () ->
+		friendService.acceptFriendRequest(1L, sender.getId()));
+		
+	}
+	
+	@Test
+	void acceptFriendRequest_notFound_throwsException() {
+		when(friendRequestRepository.findById(1L)).thenReturn(Optional.empty());
+		
+		assertThrows(ResourceNotFoundException.class , () ->
+		friendService.acceptFriendRequest(1L, receiver.getId())
+				);
+	}
+	
+	@Test
+	void acceptFriendRequest_notPending_throwsException() {
+		FriendRequest request = FriendRequest
+				.builder()
+				.id(1L)
+				.sender(sender)
+				.receiver(receiver)
+				.status(FriendRequestStatus.REJECTED)
+				.build();
+		when(friendRequestRepository.findById(1L)).thenReturn(Optional.of(request));
+		
+		assertThrows(IllegalStateException.class , () ->
+		friendService.acceptFriendRequest(1L, receiver.getId())
+		);
+	}
+	
+	@Test
+	void acceptFriendRequest_validRequest_createsFriendship() {
+		FriendRequest request = FriendRequest
+				.builder()
+				.id(1L)
+				.sender(sender)
+				.receiver(receiver)
+				.status(FriendRequestStatus.PENDING)
+				.build();
+		when(friendRequestRepository.findById(10L))
+        .thenReturn(Optional.of(request));
+		
+		when(friendRequestRepository.save(any(FriendRequest.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+		
+		when(friendshipRepository.save(any(Friendship.class))).thenAnswer(invocation ->
+		invocation.getArgument(0));
+		
+		friendService.acceptFriendRequest(10L, receiver.getId());
+		
+		assertEquals(FriendRequestStatus.ACCEPTED, request.getStatus());
+		
+		verify(friendshipRepository).save(argThat(friendship ->
+        friendship.getUser1().getId().equals(1L) &&
+        friendship.getUser2().getId().equals(2L)
+    ));
+		
+	}
+	
+	@Test
+	void rejectFriendRequest_validRequest_marksRejected() {
+	    FriendRequest request = new FriendRequest();
+	    request.setId(10L);
+	    request.setSender(sender);
+	    request.setReceiver(receiver);
+	    request.setStatus(FriendRequestStatus.PENDING);
+
+	    when(friendRequestRepository.findById(10L))
+	        .thenReturn(Optional.of(request));
+
+	    when(friendRequestRepository.save(any(FriendRequest.class)))
+	        .thenAnswer(invocation -> invocation.getArgument(0));
+
+	    friendService.rejectFriendRequest(10L, receiver.getId());
+
+	    assertEquals(FriendRequestStatus.REJECTED, request.getStatus());
+	    verify(friendshipRepository, never()).save(any());
+	}
+
 	
 }
