@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.malak.chatapp.dto.ApiResponse;
-import com.malak.chatapp.exception.FriendRequestNotFoundException;
 import com.malak.chatapp.exception.InvalidFriendRequestException;
 import com.malak.chatapp.exception.ResourceAlreadyExistsException;
 import com.malak.chatapp.exception.ResourceNotFoundException;
@@ -92,11 +91,6 @@ public class GlobalExceptionHandler {
             errors
         );
         
-        return ResponseEntity.badRequest().body(response);
-    }
-    @ExceptionHandler(FriendRequestNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleIllegalState(FriendRequestNotFoundException ex) {
-        ApiResponse<Object> response = ApiResponse.error(ex.getMessage());
         return ResponseEntity.badRequest().body(response);
     }
     
