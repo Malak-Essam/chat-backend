@@ -26,7 +26,7 @@ public class UserService {
 	public User createUser(CreateUserDto createUserDto, Role role) {
 		Optional<User> optionalUser =  userRepository.findByUsername(createUserDto.getUsername());
 		if(optionalUser.isPresent()) {
-			throw new ResourceAlreadyExistsException("Email is Already taken");
+			throw new ResourceAlreadyExistsException("Username is Already taken");
 		}
 		
 		User user = User
