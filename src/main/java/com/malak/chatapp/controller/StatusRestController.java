@@ -13,6 +13,7 @@ import com.malak.chatapp.dto.ApiResponse;
 import com.malak.chatapp.dto.UserStatusDTO;
 import com.malak.chatapp.service.UserStatusService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/status")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "User Status")
 class StatusRestController {
     
     private final UserStatusService userStatusService;

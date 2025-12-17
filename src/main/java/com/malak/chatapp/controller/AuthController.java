@@ -26,6 +26,7 @@ import com.malak.chatapp.secuirty.JwtService;
 import com.malak.chatapp.service.RefreshTokenService;
 import com.malak.chatapp.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/auth")
 @Slf4j
 @RequiredArgsConstructor
+@Tag(name = "Auth")
 public class AuthController {
 
     private final RefreshTokenService refreshTokenService;

@@ -22,6 +22,7 @@ import com.malak.chatapp.mapper.FriendMapper;
 import com.malak.chatapp.service.FriendshipService;
 import com.malak.chatapp.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/friends")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Friendship")
 public class FriendshipController {
 
     private final FriendshipService friendshipService;

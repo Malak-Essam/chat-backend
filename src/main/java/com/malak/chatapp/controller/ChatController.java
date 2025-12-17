@@ -13,11 +13,13 @@ import com.malak.chatapp.dto.MessageDTO;
 import com.malak.chatapp.service.MessageService;
 import com.malak.chatapp.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
+@Tag(name = "Chat")
 public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageService messageService;

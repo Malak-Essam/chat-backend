@@ -13,11 +13,13 @@ import com.malak.chatapp.domain.User;
 import com.malak.chatapp.service.MessageService;
 import com.malak.chatapp.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/messages")
 @Validated
+@Tag(name = "Message")
 public class MessageController {
 	private final MessageService messageService;
     private final UserService userService;

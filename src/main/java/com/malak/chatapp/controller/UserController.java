@@ -11,11 +11,13 @@ import com.malak.chatapp.dto.ApiResponse;
 import com.malak.chatapp.dto.UserDto;
 import com.malak.chatapp.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User")
 public class UserController {
     
     private final UserService userService;
