@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.malak.chatapp.domain.FriendRequest;
 import com.malak.chatapp.domain.FriendRequestStatus;
 import com.malak.chatapp.domain.Friendship;
-import com.malak.chatapp.domain.FriendshipStatus;
 import com.malak.chatapp.domain.User;
 import com.malak.chatapp.exception.ResourceNotFoundException;
 import com.malak.chatapp.repository.FriendRequestRepository;
@@ -24,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FriendService {
+public class FriendRequestService {
     
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipRepository friendshipRepository;
@@ -152,77 +151,6 @@ public class FriendService {
         return friendRequestRepository.countByReceiverIdAndStatus(userId, FriendRequestStatus.PENDING);
     }
     
-    // ========================================
-    // FRIENDSHIP OPERATIONS
-    // ========================================
-    
-    @Transactional(readOnly = true)
-    public List<User> getFriends(Long userId) {
-        userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        return friendshipRepository.getFriendsForUserId(userId);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Long> getFriendIds(Long userId) {
-        return friendshipRepository.getFriendIdsForUserId(userId);
-    }
-    
-    @Transactional(readOnly = true)
-    public boolean areFriends(Long userId1, Long userId2) {
-        return friendshipRepository.areFriends(userId1, userId2);
-    }
-    
-    @Transactional
-    public void removeFriend(Long userId, Long friendId) {
-        userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        userRepository.findById(friendId)
-            .orElseThrow(() -> new ResourceNotFoundException("Friend not found with id: " + friendId));
-        
-        if (!friendshipRepository.areFriends(userId, friendId)) {
-            throw new IllegalStateException("Users are not friends");
-        }
-        
-        friendshipRepository.deleteFriendship(userId, friendId);
-        log.info("Friendship removed between users {} and {}", userId, friendId);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<User> getMutualFriends(Long userId1, Long userId2) {
-        return friendshipRepository.findMutualFriends(userId1, userId2);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<User> searchFriends(Long userId, String searchTerm) {
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
-            return getFriends(userId);
-        }
-        return friendshipRepository.searchFriends(userId, searchTerm.trim());
-    }
-    
-    @Transactional(readOnly = true)
-    public long getFriendCount(Long userId) {
-        return friendshipRepository.countFriendsByUserId(userId);
-    }
-    
-    @Transactional(readOnly = true)
-    public FriendshipStatus getFriendshipStatus(Long currentUserId, Long otherUserId) {
-        if (friendshipRepository.areFriends(currentUserId, otherUserId)) {
-            return FriendshipStatus.FRIENDS;
-        }
-        
-        Optional<FriendRequest> request = friendRequestRepository.findPendingBetweenUsers(currentUserId, otherUserId);
-        if (request.isPresent()) {
-            if (request.get().getSender().getId().equals(currentUserId)) {
-                return FriendshipStatus.REQUEST_SENT;
-            } else {
-                return FriendshipStatus.REQUEST_RECEIVED;
-            }
-        }
-        
-        return FriendshipStatus.NOT_FRIENDS;
-    }
     
     @Transactional
     public void cleanupOldRejectedRequests(int daysOld) {

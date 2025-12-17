@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 public class UserStatusService {
     
     private final SimpMessagingTemplate messagingTemplate;
-    private final FriendService friendService;
+    private final FriendRequestService friendRequestService;
+    private final FriendshipService friendshipService;
     private final UserService userService;
     // concurrentHashMap is a data structure we will store the details of onlineUsers, and lastSeen
     // userId -> sessionId
@@ -96,7 +97,7 @@ public class UserStatusService {
     private void notifyFriendsAboutStatus(Long userId, String status) {
         try {
             // Get user's friends
-            List<Long> friendIds = friendService.getFriendIds(userId);
+            List<Long> friendIds = friendshipService.getFriendIds(userId);
             User user = userService.findUserById(userId);
             
             UserStatusDTO statusDTO = UserStatusDTO.builder()
