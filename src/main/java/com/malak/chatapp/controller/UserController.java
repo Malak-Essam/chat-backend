@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.malak.chatapp.dto.ApiResponse;
@@ -14,6 +15,7 @@ import com.malak.chatapp.dto.UserDto;
 import com.malak.chatapp.service.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
@@ -36,5 +38,18 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDto>> getUser(@PathVariable @NotNull Long userId) {
     	
         return ResponseEntity.ok(ApiResponse.success(userService.getUserById(userId), "Users retrieved successfully"));
+    }
+    
+    /**
+     * Search users by username (partial match, case-insensitive)
+     * GET /api/users/search?query=john
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<UserDto>>> searchUsers(
+            @RequestParam @NotBlank(message = "Query must not be blank") String query) {
+        
+        List<UserDto> results = userService.searchUsersByUsername(query);
+        return ResponseEntity.ok(ApiResponse.success(results,
+                String.format("Found %d users matching '%s'", results.size(), query)));
     }
 }

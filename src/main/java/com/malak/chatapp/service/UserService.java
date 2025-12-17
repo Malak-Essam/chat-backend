@@ -68,5 +68,17 @@ public class UserService {
 			.build()).toList();
 		return usersDto;
 	}
+	
+	public List<UserDto> searchUsersByUsername(String query) {
+	    List<User> users = userRepository.searchByUsername(query);
+
+	    return users.stream()
+	        .map(user -> UserDto.builder()
+	                .id(user.getId())
+	                .username(user.getUsername())
+	                .role(user.getRole())
+	                .build())
+	        .toList();
+	}
 
 }
