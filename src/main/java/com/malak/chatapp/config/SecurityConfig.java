@@ -59,7 +59,7 @@ public class SecurityConfig {
 	@Bean
     public CorsConfigurationSource corsConfigurationSource() {
     	CorsConfiguration config = new CorsConfiguration();
-    	config.setAllowedOriginPatterns(List.of("*"));
+    	config.setAllowedOriginPatterns(List.of("https://chat-frontend-dusky-five.vercel.app","*"));
     	config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
